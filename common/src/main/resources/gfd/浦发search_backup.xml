@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <search>
+        <search-template auto-start="true" max-depth="1" type="category_search" id="cloudbank_search-template">
+            <page-sequence>
+                <page depth="0" ref="index-search-page"></page>
+            </page-sequence>
+            <result-tag-list></result-tag-list>
+            <request>
+                <!-- <full-search-sign><![CDATA[true]]></full-search-sign> -->
+                <max-page><![CDATA[300]]></max-page>
+                <url-templates>
+                    <url-template><![CDATA[${seedurl}]]></url-template>
+                </url-templates>
+                <!-- <defaultHeader><![CDATA[{"Referer":"https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/showPcIndex.action"}]]></defaultHeader> -->
+            </request>
+        </search-template>
+    </search>
+    <page-definition>
+        <page path="ebill.spdbccc.com.cn" id="index-search-page">
+            <replaces></replaces>
+            <object-segment result-class="EBankData" name="smsCheck" type="base">
+                <field-extractor result-type="string" not-empty="true" field-visible-type="context" plugin-ref="picCheckPlugin" field="picCode" id="picCode"></field-extractor>
+                <field-extractor result-type="string" not-empty="true" field-visible-type="context" plugin-ref="smsCheckPlugin" field="smsCode" id="smsCode"></field-extractor>
+                <field-extractor result-type="string" not-empty="true" field-visible-type="context" field="pageContent" id="field-extractor_1">
+                    <operation ref="parser" type="parser"></operation>
+                </field-extractor>
+            </object-segment>
+            <object-segment result-class="EBankData" name="eBankData" type="base">
+                <object-segment result-class="EBankData" source="field-extractor_1" name="eBankData" type="base">
+                    <field-extractor not-empty="true" field-visible-type="context" field="accountId" id="accountId">
+                        <operation type="jsonpath"><![CDATA[$.accountInfoList.[*].account]]></operation>
+                    </field-extractor>
+                    <field-extractor result-type="string" field-visible-type="context" field="cardNo" id="cardNo">
+                        <operation type="jsonpath"><![CDATA[$.accountInfoList.[*].cardNum]]></operation>
+                        <operation type="regex" index="1"><![CDATA[.*(\d{4})]]></operation>
+                    </field-extractor>
+                    <object-segment value="-1,11,1,+" result-class="EBankData" name="eBankData" type="calculate">
+                        <field-extractor field="temp" id="offset">
+                            <operation index="1" type="regex"><![CDATA[(\d+)]]></operation>
+                        </field-extractor>
+                        <field-extractor result-type="string" field="temp" id="tempMonth">
+                            <operation datetime-field-type="month" calibrate="true" base-type="now" format="yyyyMM" offset="-${offset}" type="datetime"></operation>
+                        </field-extractor>
+                        <field-extractor result-type="resource_string" field="ppurl" id="ppurl">
+                            <operation type="template"><![CDATA[${seedurl}]]></operation>
+                        </field-extractor>
+                        <field-extractor result-type="string" field-visible-type="context" field="url" id="url">
+                            <operation type="template"><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/billDetailController/PCloadBillsDetailAll.action"${tempMonth}]]></operation>
+                        </field-extractor>
+                        <field-extractor result-type="string" source="tempMonth" plugin-ref="BillDetailPlugin" field="pageContent" id="pageContent2">
+                            <operation index="0" type="append"><![CDATA[~~~detail]]></operation>
+                            <operation index="1" type="append"><![CDATA[${detailContent}]]></operation>
+                            <operation index="2" type="append"><![CDATA[~~~Integral]]></operation>
+                            <operation index="3" type="append"><![CDATA[${IntegralContent}]]></operation>
+                        </field-extractor>
+                    </object-segment>
+                </object-segment>
+            </object-segment>
+        </page>
+    </page-definition>
+    <protocol-type-list>
+        <protocol-type><![CDATA[HTTP]]></protocol-type>
+    </protocol-type-list>
+    <url-filters>
+        <url-filter type="+"><![CDATA[spdbccc.com]]></url-filter>
+    </url-filters>
+    <service-definition></service-definition>
+    <result-tag-list>
+        <result-tag><![CDATA[bankbill]]></result-tag>
+    </result-tag-list>
+    <parser-definition>
+        <parser id="parser">
+            <headers><![CDATA[{"Referer":"https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/showPcIndex.action","X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/loginController/queryAccountList.action]]></url-template>
+            <patterns></patterns>
+        </parser>
+        <parser id="prepareUrl_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/changeAccountOrBillData.action"bilM=${tempMonth}&accountId=${accountId}]]></url-template>
+            <patterns></patterns>
+        </parser>
+        <parser id="mainContent_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/loadHomeData.action"]]></url-template>
+            <patterns></patterns>
+        </parser>
+        <parser id="detailContent_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/billDetailController/PCloadBillsDetailAll.action"]]></url-template>
+            <patterns></patterns>
+        </parser>
+        <parser id="IntegralContent_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/myIntegralController/getAccountIntegral.action"]]></url-template>
+            <patterns></patterns>
+        </parser>
+    </parser-definition>
+    <login login-type="server">
+        <login-check success-pattern="a" check-interval="5">
+            <check-url><![CDATA[${seedurl}]]></check-url>
+        </login-check>
+    </login>
+    <properties>
+        <!-- <proxy scope="request"><![CDATA[http://wiseproxy.dashu.ds:8080/wiseproxy/service/getProxy?site=alipay.com&partition=adsl&mode=session]]></proxy> -->
+        <wait-interval><![CDATA[100]]></wait-interval>
+        <!-- <unicode-mode><![CDATA[standard]]></unicode-mode> -->
+        <!-- <redirect-uri-escaped><![CDATA[true]]></redirect-uri-escaped> -->
+        <cookie coexist="false" retain-quote="false" scope="user_session"></cookie>
+        <duplicate-removal><![CDATA[true]]></duplicate-removal>
+        <max-retry-count><![CDATA[3]]></max-retry-count>
+    </properties>
+    <plugin-definition>
+        <plugin phase="field" file-type="jar" id="picCheckPlugin">
+            <main-class><![CDATA[com.datatrees.crawler.plugin.main.PicCodeMain]]></main-class>
+        </plugin>
+        <plugin phase="field" file-type="jar" id="smsCheckPlugin">
+            <main-class><![CDATA[com.datatrees.crawler.plugin.main.SmsCodeMain]]></main-class>
+        </plugin>
+        <plugin phase="field" file-type="jar" id="BillDetailPlugin">
+            <main-class><![CDATA[com.treefinance.crawler.plugin.BillDetailsPlugin]]></main-class>
+        </plugin>
+    </plugin-definition>
+</config>

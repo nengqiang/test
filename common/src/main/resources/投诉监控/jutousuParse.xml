@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 聚投诉ts.21cn.com extractorConfig -->
+<config>
+    <extrator-selectors>
+        <selector field="url" contain="sprite-automate" dis-contain="" ref="page_1"/>
+    </extrator-selectors>
+    <page-extractor-definition>
+        <page-extractor id="page_1">
+            <page-sources>
+                <source field="pageContent"/>
+            </page-sources>
+            <object-segment name="opinionDetails" type="jsonpath" value="$.*">
+                <field-extractor id="platform" field="platform" result-type="string">
+                    <operation type="template"><![CDATA[tousu_jutousu]]></operation>
+                </field-extractor>
+                <field-extractor id="entryName" field="entryName" result-type="string">
+                    <operation type="template"><![CDATA[${entryName}]]></operation>
+                </field-extractor>
+                <field-extractor id="keyword" field="keyword" result-type="string">
+                    <operation type="template"><![CDATA[${keyword}]]></operation>
+                </field-extractor>
+                <field-extractor id="link" field="link" result-type="string">
+                    <operation type="jsonpath"><![CDATA[$.link]]></operation>
+                </field-extractor>
+                <field-extractor id="title" field="title" result-type="string">
+                    <operation type="jsonpath"><![CDATA[$.title]]></operation>
+                </field-extractor>
+                <field-extractor id="overview" field="overview" result-type="string">
+                    <operation type="jsonpath"><![CDATA[$.overview]]></operation>
+                </field-extractor>
+                <field-extractor id="appeal" field="appeal" result-type="string">
+                    <operation type="jsonpath"><![CDATA[$.appeal]]></operation>
+                </field-extractor>
+                <field-extractor id="author" field="author" result-type="string">
+                    <operation type="jsonpath"><![CDATA[$.author]]></operation>
+                </field-extractor>
+                <field-extractor id="phone" field="phone" result-type="string">
+                    <operation type="jsonpath"><![CDATA[$.phone]]></operation>
+                </field-extractor>
+                <field-extractor id="time" field="time" result-type="date">
+                    <operation type="jsonpath"><![CDATA[$.time]]></operation>
+                </field-extractor>
+            </object-segment>
+        </page-extractor>
+    </page-extractor-definition>
+
+    <plugin-definition>
+
+    </plugin-definition>
+</config>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+
+    <bean id="u" class="com.hnq.study.simulatespring.dao.impl.UserDaoImpl">
+        <property name="sets">
+            <set>
+                <value>set1</value>
+                <value>set2</value>
+            </set>
+        </property>
+        <property name="lists">
+            <list>
+                <value>list1</value>
+                <value>list2</value>
+                <value>list3</value>
+            </list>
+        </property>
+        <property name="maps">
+            <map>
+                <entry key="key1" value="value1"/>
+                <entry key="key2" value="value2"/>
+                <entry key="key3" value="value3"/>
+                <entry key="key4" value="value4"/>
+            </map>
+        </property>
+
+    </bean>
+
+    <bean id="userService" class="com.hnq.study.simulatespring.service.UserService">
+        <property name="userDao" ref="u"/>
+    </bean>
+
+    <bean id="logIntercept" class="com.hnq.study.simulatespring.interceptor.LogIntercept"/>
+</beans>

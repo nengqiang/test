@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 黑猫投诉tousu.sina.com.cn searchConfig -->
+<config>
+    <protocol-type-list>
+        <protocol-type><![CDATA[HTTP]]></protocol-type>
+    </protocol-type-list>
+    <result-tag-list>
+        <result-tag><![CDATA[consensus]]></result-tag>
+    </result-tag-list>
+
+    <url-filters>
+        <url-filter type="+">.sinaimg.cn</url-filter>
+    </url-filters>
+
+    <properties>
+        <encoding>GBK</encoding>
+        <unicode-mode><![CDATA[hex]]></unicode-mode>
+    </properties>
+
+    <page-definition>
+        <page id="keyword-search-page" path="finance/blackcat">
+            <object-segment name="basicSearch" result-class="DefaultData">
+                <field-extractor id="url" field="url" result-type="string">
+                    <operation type="template">${current_url}</operation>
+                </field-extractor>
+                <field-extractor id="timestamp" field="timestamp" result-type="string">
+                    <operation type="template"><![CDATA[${timestamp}]]></operation>
+                </field-extractor>
+                <field-extractor id="entryName" field="entryName" result-type="string">
+                    <operation type="template"><![CDATA[${entryName}]]></operation>
+                </field-extractor>
+                <field-extractor id="keyword" field="keyword" result-type="string">
+                    <operation type="template"><![CDATA[${search}]]></operation>
+                </field-extractor>
+                <field-extractor id="pageContent" field="pageContent" result-type="string" plugin-ref="searchPagePlugin"/>
+            </object-segment>
+        </page>
+    </page-definition>
+
+    <search>
+        <search-template id="keyword-search-template" max-depth="1" thread-count="5">
+            <request>
+                <url-templates>
+                    <url-template><![CDATA[https://n.sinaimg.cn/finance/blackcat/pc/img/logo-1x.png]]></url-template>
+                </url-templates>
+                <max-page>10</max-page>
+                <no-search-results-pattern/>
+                <max-retry-count><![CDATA[3]]></max-retry-count>
+            </request>
+            <result-tag-list>
+                <result-tag><![CDATA[opinionDetect]]></result-tag>
+            </result-tag-list>
+            <page-sequence>
+                <page depth="0" ref="keyword-search-page"/>
+            </page-sequence>
+        </search-template>
+    </search>
+
+    <plugin-definition>
+        <plugin id="searchPagePlugin" file-type="jar" phase="field" file-name="spider-extra-plugin.jar">
+            <main-class>com.datatrees.spider.extra.plugin.check.DefineCheckPlugin</main-class>
+            <params>{"formType":"SEARCH_PAGE"}</params>
+        </plugin>
+    </plugin-definition>
+
+</config>

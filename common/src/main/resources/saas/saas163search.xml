@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <protocol-type-list>
+        <protocol-type><![CDATA[HTTP]]></protocol-type>
+    </protocol-type-list>
+
+    <result-tag-list>
+        <result-tag><![CDATA[bankbill]]></result-tag>
+    </result-tag-list>
+
+    <url-filters>
+        <url-filter type="+">.163.com</url-filter>
+    </url-filters>
+
+    <properties>
+        <cookie scope="user_session"/>
+    </properties>
+
+    <login login-type="app">
+        <login-check fail-pattern="loginFormCheck" success-pattern="回到首页|btnLogout|CONF.uid\s*=\s*'[^']*'|sid\s*:\s*'[^']*'">
+            <check-url><![CDATA[${endurl}]]></check-url>
+            <object-segment name="sid">
+                <field-extractor id="sid" field="sid" result-type="string" field-visible-type="context">
+                    <operation type="template">${cookie.Coremail\.sid}</operation>
+                </field-extractor>
+                <field-extractor id="sid" field="sid" result-type="string" field-visible-type="context" stand-by="true" not-empty="true">
+                    <operation type="template">${cookie.Coremail}</operation>
+                    <operation type="regex" index="1"><![CDATA[\w+%(.*)%]]></operation>
+                </field-extractor>
+                <field-extractor id="emailAccount" field="emailAccount" field-visible-type="processor_result">
+                    <operation type="template">${cookie.P_INFO}</operation>
+                    <operation type="regex" index="1"><![CDATA[\|([^\|]*@163.com)]]></operation>
+                </field-extractor>
+                <field-extractor id="emailAccount" field="emailAccount" field-visible-type="processor_result" stand-by="true">
+                    <operation type="template">${cookie.P_INFO}</operation>
+                    <operation type="regex" index="1"><![CDATA[([^\|]*@163.com)]]></operation>
+                </field-extractor>
+                <field-extractor id="emailAccount" field="emailAccount" field-visible-type="processor_result" stand-by="true" not-empty="true">
+                    <operation type="template">${cookie.P_INFO}</operation>
+                    <operation type="regex" index="1"><![CDATA[([^\|]*)]]></operation>
+                    <operation type="append" index="-1">@163.com</operation>
+                </field-extractor>
+                <field-extractor id="noNeedDetect" field="noNeedDetect" field-visible-type="processor_result" result-type="boolean">
+                    <operation type="template">true</operation>
+                </field-extractor>
+            </object-segment>
+        </login-check>
+    </login>
+
+    <!--<parser-definition>-->
+    <!--<parser id="search-page-parser">-->
+    <!--<url-template><![CDATA[http://mail.163.com/jy6/xhr/list/search.do?sid=${sid}"fid=0&start=#{page,0*1,${totalCount}/100,100+}&limit=100&thread=false&keyword=${keyword}&searchType=FULL]]></url-template>-->
+    <!--</parser>-->
+    <!--</parser-definition>-->
+
+    <page-definition>
+        <page id="keyword-search-page" path="func=mbox:searchMessages">
+            <object-segment name="linkNode" result-class="LinkNode" type="xpath" value="//result/array/object">
+                <field-extractor id="pagecontent" field="pagecontent" result-type="string" not-empty="true">
+                    <operation type="return"/>
+                </field-extractor>
+                <field-extractor id="mailid" field="mailid" result-type="string">
+                    <operation type="xpath"><![CDATA[//object/string[@name='id']/text()]]></operation>
+                </field-extractor>
+                <field-extractor id="uniqueSign" field="uniqueSign" result-type="string">
+                    <operation type="template">${emailAccount}_${mailid}</operation>
+                </field-extractor>
+                <field-extractor id="url" field="url" result-type="string">
+                    <operation type="template"><![CDATA[https://mail.163.com/js6/s?func=mbox:getMessageData&sid=${sid}&mode=text&mid=${mailid}&l=read&action=read_head]]></operation>
+                </field-extractor>
+                <field-extractor id="receiveAt" field="receiveAt" result-type="date">
+                    <operation type="xpath"><![CDATA[//object/date[@name='sentDate']/text()]]></operation>
+                </field-extractor>
+                <field-extractor id="modifyAt" field="modifyAt" result-type="date">
+                    <operation type="xpath"><![CDATA[//object/date[@name='receivedDate']/text()]]></operation>
+                </field-extractor>
+                <field-extractor id="subject" field="subject" result-type="string">
+                    <operation type="xpath"><![CDATA[//object/string[@name='subject']/text()]]></operation>
+                    <operation from="账\s*单" to="账单" type="replace"/>
+                </field-extractor>
+                <field-extractor id="folder" field="folder" result-type="string">
+                    <operation type="xpath"><![CDATA[//object/int[@name='fid']/text()]]></operation>
+                    <operation type="replace" from="^3$" to="已发送"/>
+                </field-extractor>
+                <field-extractor id="sender" field="sender" result-type="string">
+                    <operation type="xpath"><![CDATA[//object/string[@name='from']/text()]]></operation>
+                    <operation type="regex" index="1"><![CDATA[&lt;([^>]+)&gt;]]></operation>
+                </field-extractor>
+                <field-extractor id="sender" field="sender" result-type="string" stand-by="true">
+                    <operation type="xpath"><![CDATA[//object/string[@name='from']/text()]]></operation>
+                </field-extractor>
+                <field-extractor id="address" field="address" result-type="string">
+                    <operation type="template">${sender}</operation>
+                </field-extractor>
+                <field-extractor id="receiver" field="receiver" result-type="string">
+                    <operation type="xpath"><![CDATA[//object/string[@name='to']/text()]]></operation>
+                    <operation type="regex" index="1"><![CDATA[&lt;(\w+@[\w\.]+)&gt;]]></operation>
+                </field-extractor>
+                <field-extractor id="receiver" field="receiver" result-type="string" stand-by="true">
+                    <operation type="xpath"><![CDATA[//object/string[@name='to']/text()]]></operation>
+                </field-extractor>
+                <field-extractor id="fid" field="fid" result-type="string">
+                    <operation type="xpath"><![CDATA[//object/int[@name='fid']/text()]]></operation>
+                </field-extractor>
+            </object-segment>
+
+            <!--<object-segment name="linkNode" result-class="LinkNode">-->
+            <!--<field-extractor id="totalCount" field="totalCount" result-type="string">-->
+            <!--<operation type="jsonpath">$.total</operation>-->
+            <!--</field-extractor>-->
+            <!--<field-extractor id="url" field="url" result-type="string">-->
+            <!--<operation type="parser" ref="search-page-parser"/>-->
+            <!--</field-extractor>-->
+            <!--</object-segment>-->
+
+
+        </page>
+
+        <page id="show-page" path="cgi-bin/readmail">
+            <object-segment name="mail" result-class="MailBillData">
+                <field-extractor id="mail" field="temp" field-visible-type="request">
+                    <operation type="mailparser" body-parser="true"/>
+                </field-extractor>
+                <field-extractor id="mailHeader" field="mailHeader">
+                    <operation type="template">${mail.mailHeader}</operation>
+                </field-extractor>
+                <field-extractor id="sender" field="sender" result-type="string" default-value="${sender}">
+                    <operation type="regex" index="1"><![CDATA["mail":"([^"]*)"]]></operation>
+                </field-extractor>
+                <field-extractor id="sender" field="sender" stand-by="true" result-type="string">
+                    <operation type="template">${address}</operation>
+                </field-extractor>
+                <field-extractor id="receiver" field="receiver" result-type="string">
+                    <operation type="template">${receiver}</operation>
+                </field-extractor>
+                <field-extractor id="uniqueSign" field="uniqueSign" result-type="string">
+                    <operation type="template">${uniqueSign}</operation>
+                </field-extractor>
+                <field-extractor id="pageContent" field="pageContent">
+                    <operation type="template">${mail.pageContent}</operation>
+                </field-extractor>
+                <field-extractor id="pageContentFile" field="pageContentFile">
+                    <operation type="return"/>
+                </field-extractor>
+                <!-- <field-extractor id="mailHeader" field="mailHeader" result-type="file"> <operation type="template"><![CDATA[http://mail.163.com/m/s?func=mbox:getMessageData&sid=${sid}&mode=text&mid=${mailid}&l=read&action=read_head]]></operation>
+                  </field-extractor> -->
+                <field-extractor id="url" field="url" result-type="string">
+                    <operation type="template">${current_url}</operation>
+                </field-extractor>
+                <field-extractor id="subject" field="subject" result-type="string">
+                    <operation type="template">${subject}</operation>
+                </field-extractor>
+                <field-extractor id="receiveAt" field="receiveAt" result-type="date" format="yyyy-MM-dd hh:mm:ss">
+                    <operation type="template">${receiveAt}</operation>
+                </field-extractor>
+                <field-extractor id="attachment" field="attachment" result-type="file">
+                    <operation type="template" return-object="true">${mail.attachment}</operation>
+                </field-extractor>
+                <field-extractor id="modifyAtTemp" field="temp" result-type="date" format="yyyy-MM-dd hh:mm:ss" field-visible-type="request">
+                    <operation type="template">${modifyAt}</operation>
+                </field-extractor>
+                <field-extractor id="fid" field="temp" field-visible-type="request">
+                    <operation type="template">${fid}</operation>
+                </field-extractor>
+
+                <object-segment name="extraInfo" pop-return="true">
+                    <field-extractor id="ModifiedAt" field="ModifiedAt" result-type="date">
+                        <operation type="template" return-object="true">${modifyAtTemp}</operation>
+                    </field-extractor>
+                    <field-extractor id="ServerIp" field="ServerIp">
+                        <operation type="template">${mail.mailServerIp}</operation>
+                    </field-extractor>
+                    <field-extractor id="ServerIp" field="ServerIp" stand-by="true">
+                        <operation type="template">${mail.x-originating-ip}</operation>
+                        <operation type="regex" index="1"><![CDATA[(\d+.\d+.\d+.\d+)]]></operation>
+                    </field-extractor>
+                    <field-extractor id="IsImapTemp" field="temp">
+                        <operation type="template">${mail.received}</operation>
+                    </field-extractor>
+                    <field-extractor id="IsImapTemp" field="temp" stand-by="true">
+                        <operation type="template">${mail.x-cuid}</operation>
+                    </field-extractor>
+                    <field-extractor id="IsImap" field="IsImap" source="IsImapTemp" result-type="boolean">
+                        <operation type="triple" triple-type="regex">${this} matches:X-CUID|IMAP?true:false</operation>
+                    </field-extractor>
+                    <field-extractor id="sysFlag" field="sysFlag" result-type="int" default-value="2">
+                        <operation type="template" failover="true">${fid}_${mail.delivered-to}</operation>
+                        <!-- 1表示收件箱 -->
+                        <!-- 1:可信 ,2: 不可信，3:欺诈 (只正对于firsthand=1) 1_[Delivered-To: miloh@139.com,m15068820568_2@163.com] -->
+                        <operation from="^1_.*com\]$" to="3" type="replace"/>
+                        <operation from="^\d+_.*com\]$" to="2" type="replace"/>
+                        <operation from="^\d+_.*-to}$" to="1" type="replace"/>
+                    </field-extractor>
+                </object-segment>
+            </object-segment>
+        </page>
+
+        <page id="server-detect-init-page" path="www.163.com">
+            <object-segment name="linkNode" result-class="LinkNode">
+                <field-extractor id="mailBillPageContent" field="temp" field-visible-type="request">
+                    <operation type="template">${mailBills}</operation>
+                </field-extractor>
+                <object-segment name="linkNode" source="mailBillPageContent" type="jsonpath" value="$" result-class="LinkNode">
+                    <field-extractor id="billIds" field="billIds" result-type="string" not-empty="true">
+                        <operation type="jsonpath">$.billIds</operation>
+                    </field-extractor>
+                    <field-extractor id="mailId" field="mailId" result-type="string">
+                        <operation type="jsonpath">$.mailId</operation>
+                    </field-extractor>
+                    <field-extractor id="urlTemp" field="urlTemp" result-type="string">
+                        <operation type="jsonpath">$.url</operation>
+                    </field-extractor>
+                    <field-extractor id="mid" source="urlTemp" field="mid" result-type="string">
+                        <operation type="regex" index="1"><![CDATA[mid=([^&"]*)]]></operation>
+                    </field-extractor>
+                    <field-extractor id="sid" source="urlTemp" field="sid" result-type="string">
+                        <operation type="regex" index="1"><![CDATA[sid=([^&"]*)]]></operation>
+                    </field-extractor>
+                    <field-extractor id="url" field="url" result-type="string">
+                        <operation type="template"><![CDATA[https://mail.163.com/js6/s?func=mbox:getMessageData&sid=${sid}&mode=text&mid=${mid}&l=read&action=read_head]]></operation>
+                    </field-extractor>
+                    <!--<field-extractor id="url" field="url" result-type="string">-->
+                    <!--<operation type="template"><![CDATA[http://mail.163.com/jy6/s?sid=${sid}&mid=${mid}&func=mbox:getMessageData&mode=text]]></operation>-->
+                    <!--</field-extractor>-->
+                </object-segment>
+            </object-segment>
+        </page>
+
+        <page id="server-detect-page" path="mode=text">
+            <object-segment name="mime" result-class="DefaultData">
+                <field-extractor id="url" field="url" result-type="string">
+                    <operation type="template">${current_url}</operation>
+                </field-extractor>
+                <field-extractor id="billIds" field="billIds" result-type="string" not-empty="true">
+                    <operation type="template">${billIds}</operation>
+                </field-extractor>
+                <field-extractor id="mailId" field="mailId" result-type="string">
+                    <operation type="template">${mailId}</operation>
+                </field-extractor>
+                <field-extractor id="pageContent" field="pageContent">
+                    <operation type="return"/>
+                </field-extractor>
+            </object-segment>
+        </page>
+    </page-definition>
+
+    <search>
+        <search-template id="keyword-search-template" type="keyword_search" max-depth="1">
+            <request>
+                <url-templates>
+                    <url-template><![CDATA[https://mail.163.com/js6/s?sid=${sid}&func=mbox:searchMessages"var=<?xml version="1.0"?><object><string name="order">date</string><boolean name="desc">true</boolean><string name="operator">or</string><array name="condictions"><object><string name="field">subject</string><string name="operator">contains</string><string name="operand">${keyword}</string><boolean name="ignoreCase">true</boolean></object></array><int name="windowSize">100</int></object>]]></url-template>
+                </url-templates>
+                <max-page>1000</max-page>
+                <max-retry-count><![CDATA[3]]></max-retry-count>
+            </request>
+            <page-sequence>
+                <page depth="0" ref="keyword-search-page"/>
+                <page depth="1" ref="show-page"/>
+            </page-sequence>
+        </search-template>
+        <search-template id="mailServer-detect-template" type="category_search" max-depth="1" auto-start="false">
+            <request>
+                <url-templates>
+                    <url-template><![CDATA[http://www.163.com/]]></url-template>
+                </url-templates>
+                <max-page>200</max-page>
+                <max-retry-count><![CDATA[3]]></max-retry-count>
+            </request>
+            <result-tag-list>
+                <result-tag><![CDATA[detectResults]]></result-tag>
+            </result-tag-list>
+            <page-sequence>
+                <page depth="0" ref="server-detect-init-page"/>
+                <page depth="1" ref="server-detect-page"/>
+            </page-sequence>
+        </search-template>
+    </search>
+
+</config>

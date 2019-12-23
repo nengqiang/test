@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <protocol-type-list>
+        <protocol-type><![CDATA[HTTP]]></protocol-type>
+    </protocol-type-list>
+    <result-tag-list>
+        <result-tag><![CDATA[bankbill]]></result-tag>
+    </result-tag-list>
+
+    <url-filters>
+        <url-filter type="+">spdbccc.com</url-filter>
+    </url-filters>
+
+
+    <properties>
+        <cookie scope="user_session"></cookie>
+    </properties>
+
+    <login login-type="server">
+        <login-check success-pattern=".">
+            <check-url><![CDATA[${seedurl}]]></check-url>
+        </login-check>
+    </login>
+
+
+    <page-definition>
+        <page id="index-search-page" path="cloudbank-portal/loginController">
+            <object-segment name="smsCheck" result-class="EBankData">
+                <field-extractor id="smsCode" field="smsCode" plugin-ref="picSmsCheckPlugin" field-visible-type="context" result-type="string" not-empty="true">
+                </field-extractor>
+                <field-extractor id="field-extractor_1" field="pageContent" field-visible-type="context" result-type="string" not-empty="true">
+                    <operation type="parser" ref="parser"></operation>
+                </field-extractor>
+            </object-segment>
+            <object-segment name="eBankData" result-class="EBankData">
+                <object-segment name="eBankData" source="field-extractor_1" result-class="EBankData">
+                    <field-extractor id="accountId" field="accountId" result-type="temp" field-visible-type="context" not-empty="true">
+                        <operation type="jsonpath"><![CDATA[$.accountInfoList.[*].account]]></operation>
+                    </field-extractor>
+                    <field-extractor result-type="string" field-visible-type="context" field="cardNo" id="cardNo">
+                        <operation type="jsonpath"><![CDATA[$.accountInfoList.[*].cardNum]]></operation>
+                        <operation type="regex" index="1"><![CDATA[.*(\d{4})]]></operation>
+                    </field-extractor>
+                    <object-segment name="eBankData" type="calculate" value="-1,11,1,+" result-class="EBankData">
+                        <field-extractor id="offset" field="temp">
+                            <operation type="regex" index="1"><![CDATA[(\d+)]]></operation>
+                        </field-extractor>
+                        <field-extractor id="tempMonth"  field="temp" result-type="string">
+                            <operation type="datetime" base-type="now"  datetime-field-type="month" offset="-${offset}" format="yyyyMM" calibrate="true" />
+                        </field-extractor>
+                        <field-extractor id="ppurl" field="ppurl" result-type="resource_string">
+                            <operation type="template"><![CDATA[${seedurl}]]></operation>
+                        </field-extractor>
+                        <field-extractor id="prepareUrl" field="prepareUrl" result-type="resource_string">
+                            <operation type="parser" ref="prepareUrl_parser"></operation>
+                        </field-extractor>
+                        <field-extractor id="mainContent" field="mainContent" result-type="resource_string">
+                            <operation type="parser" ref="mainContent_parser"></operation>
+                        </field-extractor>
+                        <field-extractor id="detailContent" field="detailContent" result-type="resource_string">
+                            <operation type="parser" ref="detailContent_parser"></operation>
+                        </field-extractor>
+                        <field-extractor id="IntegralContent" field="IntegralContent" result-type="resource_string">
+                            <operation type="parser" ref="IntegralContent_parser"></operation>
+                        </field-extractor>
+                        <field-extractor id="url" field="url" result-type="string" field-visible-type="context">
+                            <operation type="template">https://ebill.spdbccc.com.cn/cloudbank-portal/billDetailController/PCloadBillsDetailAll.action"${tempMonth}</operation>
+                        </field-extractor>
+                        <field-extractor id="pageContent" field="pageContent" result-type="string" source="mainContent">
+                            <operation type="append" index="-1"><![CDATA[~~~detail]]></operation>
+                            <operation type="append" index="-1"><![CDATA[${detailContent}]]></operation>
+                            <operation type="append" index="-1"><![CDATA[~~~Integral]]></operation>
+                            <operation type="append" index="-1"><![CDATA[${IntegralContent}]]></operation>
+                        </field-extractor>
+                    </object-segment>
+                </object-segment>
+            </object-segment>
+        </page>
+
+        <page id="search-page-191009" path="acsp-web/billMain">
+            <object-segment name="eBankData" result-class="EBankData">
+                <field-extractor id="picSms" field="picSms" plugin-ref="picSmsCheckPlugin" field-visible-type="context" result-type="string" not-empty="true"/>
+
+                <field-extractor id="cardNbr" field="cardNbr" result-type="string">
+                    <operation type="template">${seedurl}</operation>
+                    <operation type="regex" index="1"><![CDATA[cardNbr=([^&]+)&*]]></operation>
+                </field-extractor>
+                <field-extractor id="idNo" field="idNo" result-type="string">
+                    <operation type="template">${seedurl}</operation>
+                    <operation type="regex" index="1"><![CDATA[idNo=([^&]+)&*]]></operation>
+                </field-extractor>
+                <field-extractor id="cardFlag" field="cardFlag" result-type="string">
+                    <operation type="parser" ref="cardFlagParser"/>
+                    <operation type="regex" index="1"><![CDATA[cardFlag\\\":\\\"([\w]+)]]></operation>
+                </field-extractor>
+
+                <object-segment name="eBankData" type="calculate" value="-1,11,1,+" result-class="EBankData">
+                    <field-extractor id="offset" field="temp">
+                        <operation type="regex" index="1"><![CDATA[(\d+)]]></operation>
+                    </field-extractor>
+                    <field-extractor id="tempMonth"  field="temp" result-type="string">
+                        <operation type="datetime" base-type="now" datetime-field-type="month" offset="-${offset}" format="yyyyMM" calibrate="true" />
+                    </field-extractor>
+                    <field-extractor id="billInfo" field="billInfo" result-type="string">
+                        <operation type="parser" ref="billHeadParser"/>
+                        <operation type="jsonpath"><![CDATA[$.jsonData]]></operation>
+                        <operation type="escape" escape-type="js" handling-type="unescape"/>
+                    </field-extractor>
+                    <field-extractor id="billDetailInfo" field="billDetailInfo" result-type="string">
+                        <operation type="parser" ref="billDetailParser"/>
+                        <operation type="jsonpath"><![CDATA[$.jsonData]]></operation>
+                        <operation type="escape" escape-type="js" handling-type="unescape"/>
+                    </field-extractor>
+
+                    <field-extractor id="url" field="url" result-type="string" field-visible-type="context">
+                        <operation type="template">${seedurl}</operation>
+                    </field-extractor>
+                    <field-extractor id="pageContent" field="pageContent" result-type="string">
+                        <operation type="append" index="-1"><![CDATA[~~~bill]]></operation>
+                        <operation type="append" index="-1"><![CDATA[${billInfo}]]></operation>
+                        <operation type="append" index="-1"><![CDATA[~~~billDetail]]></operation>
+                        <operation type="append" index="-1"><![CDATA[${billDetailInfo}]]></operation>
+                    </field-extractor>
+                </object-segment>
+            </object-segment>
+        </page>
+    </page-definition>
+
+    <parser-definition>
+        <parser id="parser">
+            <headers><![CDATA[{"Referer":"https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/showPcIndex.action","X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/loginController/queryAccountList.action]]></url-template>
+        </parser>
+        <parser id="prepareUrl_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/changeAccountOrBillData.action"bilM=${tempMonth}&accountId=${accountId}]]></url-template>
+        </parser>
+        <parser id="mainContent_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/myBillController/loadHomeData.action"]]></url-template>
+        </parser>
+        <parser id="detailContent_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/billDetailController/PCloadBillsDetailAll.action"]]></url-template>
+        </parser>
+        <parser id="IntegralContent_parser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/cloudbank-portal/myIntegralController/getAccountIntegral.action"]]></url-template>
+        </parser>
+
+        <parser id="cardFlagParser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/acsp-service/acsp-app-card/web/cardsData/loadAccounts"{"cardNbr":"${cardNbr}","category":"0001","idNo":"${idNo}","idType":"HSvmIGSbSLA=","source":"${source}","timeSq":"${timeSq}","tokenId":"${tokenId}"}]]></url-template>
+        </parser>
+        <parser id="billHeadParser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/acsp-service/acsp-app-bill/web/billHeadData/loadBillHeadPC"{"cardNbr":"${cardFlag}","category":"0001","idNo":"${idNo}","idType":"HSvmIGSbSLA=","source":"${source}","timeSq":"${timeSq}","billDate":"${tempMonth}","billFlag":"01","tokenId":"${tokenId}"}]]></url-template>
+        </parser>
+        <parser id="billDetailParser">
+            <headers><![CDATA[{"X-Requested-With":"XMLHttpRequest"}]]></headers>
+            <url-template><![CDATA[https://ebill.spdbccc.com.cn/acsp-service/acsp-app-bill/web/billDetailData/loadBillDetail"{"cardNbr":"${cardFlag}","category":"0001","idNo":"${idNo}","idType":"HSvmIGSbSLA=","source":"${source}","timeSq":"${timeSq}","billDate":"${tempMonth}","billFlag":"01","queryLevel":"01","tokenId":"${tokenId}"}]]></url-template>
+        </parser>
+    </parser-definition>
+
+    <search>
+        <search-template id="cloudbank_search-template" type="category_search" max-depth="1">
+            <request>
+                <defaultHeader><![CDATA[{"Referer":"${seedurl}","X-Requested-With":"XMLHttpRequest"}]]></defaultHeader>
+                <url-templates>
+                    <url-template><![CDATA[${seedurl}]]></url-template>
+                </url-templates>
+                <max-page>300</max-page>
+                <max-retry-count><![CDATA[3]]></max-retry-count>
+            </request>
+            <page-sequence>
+                <page depth="0" ref="index-search-page" />
+                <page depth="0" ref="search-page-191009" />
+            </page-sequence>
+        </search-template>
+    </search>
+
+    <plugin-definition>
+        <plugin id="picSmsCheckPlugin" file-type="jar" phase="field" file-name="spider-bank-plugin.jar">
+            <main-class>com.datatrees.spider.bank.plugin.check.PicSmsCheckPlugin</main-class>
+            <params>{"formType":"VALIDATE_BILL_DETAIL"}</params>
+        </plugin>
+    </plugin-definition>
+
+</config>

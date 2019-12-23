@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+     http://www.springframework.org/schema/aop
+          http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <bean id="dataSourceHanif" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close" >
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://192.168.5.241:3306/hanif?useSSL=false"/>
+        <property name="username" value="root"/>
+        <property name="password" value=""/>
+        <property name="initialSize" value="2"/>
+        <property name="maxActive" value="20"/>
+        <property name="maxIdle" value="10"/>
+        <property name="maxWait" value="10000"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="validationQuery" value="select 1 from dual"/>
+        <property name="validationInterval" value="30000"/>
+        <property name="timeBetweenEvictionRunsMillis" value="10000"/>
+    </bean>
+
+    <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSourceHanif"/>
+        <property name="nestedTransactionAllowed" value="true" />
+        <qualifier value="tx_hanif"/>
+    </bean>
+
+    <bean id="sqlSessionFactoryHanif" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSourceHanif"/>
+        <property name="mapperLocations" value="classpath:sqlmap/**/*.xml"/>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryHanif"/>
+        <property name="basePackage" value="com.hnq.study.dao.mapper"/>
+    </bean>
+</beans>

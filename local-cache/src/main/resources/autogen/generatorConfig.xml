@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+
+    <context id="crawler-dao" targetRuntime="MyBatis3">
+        <property name="mergeable" value="false"/>
+
+        <plugin type="org.mybatis.generator.plugins.RenameExampleClassPlugin">
+            <property name="searchString" value="Example$"/>
+            <property name="replaceString" value="Criteria"/>
+        </plugin>
+
+        <plugin type="org.mybatis.generator.plugins.RowBoundsPlugin"/>
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>
+
+        <commentGenerator>
+            <property name="suppressDate" value="true"/>
+            <property name="suppressMethodComments" value="false"/>
+            <property name="suppressXMLComments" value="false"/>
+            <property name="suppressClassComments" value="false"/>
+            <!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+            <property name="suppressAllComments" value="false" />
+        </commentGenerator>
+
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+                        connectionURL="jdbc:mysql://192.168.5.241:3306/hanif"
+                        userId="root"
+                        password="">
+        </jdbcConnection>
+
+        <javaModelGenerator targetPackage="com.hnq.study.dao.domain"
+                            targetProject="src/main/java/"><!-- src/generated/java -->
+            <property name="enableSubPackages" value="true"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+
+        <sqlMapGenerator targetPackage="sqlmap"
+                         targetProject="src/main/resources/"> <!-- src/generated/resources -->
+            <property name="enableSubPackages" value="true"/>
+        </sqlMapGenerator>
+
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.hnq.study.dao.mapper"
+                             targetProject="src/main/java/"> <!-- src/generated/java -->
+            <property name="enableSubPackages" value="true"/>
+        </javaClientGenerator>
+
+        <table schema="hanif" tableName="baidu_hot" domainObjectName="BaiduHot" >
+            <!--<property name="useActualColumnNames" value="true"/>-->
+            <!-- 是否使用自增主键，使用了insert语句里面就没有id字段 -->
+            <generatedKey column="Id" sqlStatement="MySql" identity="true" />
+        </table>
+
+    </context>
+
+</generatorConfiguration>

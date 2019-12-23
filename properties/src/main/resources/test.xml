@@ -1,0 +1,6 @@
+<beans>
+    <bean id="u" class="com.hnq.study.simulatespring.dao.impl.UserDaoImpl" />
+    <bean id="userService" class="com.hnq.study.simulatespring.service.UserService">
+        <property name="userDao" bean="u"/>
+    </bean>
+</beans>

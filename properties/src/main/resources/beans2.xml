@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-2.5.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+    <context:annotation-config/>
+    <context:component-scan base-package="com.hnq.study.simulatespring"/>
+    <!-- 可以采用使用aspectj注解的方式产生aop -->
+    <aop:aspectj-autoproxy/><!-- 自动产生代理，原理是aspectj，它是一个专门用来生成代理的框架 -->
+
+    <bean id="u" class="com.hnq.study.simulatespring.dao.impl.UserDaoImpl"/>
+
+    <bean id="userService" class="com.hnq.study.simulatespring.service.UserService">
+        <property name="userDao" ref="u"/>
+    </bean>
+</beans>
