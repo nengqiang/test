@@ -22,10 +22,8 @@
         <module>annotation</module>
         <module>reflection</module>
         <module>properties</module>
-        <module>crawler</module>
         <module>crawler-show</module>
         <module>multithreading</module>
-        <module>crawler-my-demo</module>
         <module>net-program</module>
         <module>data-analyzer</module>
         <module>another-tech</module>
@@ -85,8 +83,8 @@
 
         <kryo.version>4.0.2</kryo.version>
         <javacsv.version>2.0</javacsv.version>
-        <!-- be careful when modify the version -->
-        <htmlcleaner.version>3.0_jdk8_tf</htmlcleaner.version>
+        <!-- 这个版本的htmlcleaner好像有个bug -->
+        <htmlcleaner.version>2.9</htmlcleaner.version>
         <jsoup.version>1.12.1</jsoup.version>
         <lucene.version>5.3.0</lucene.version>
     </properties>
@@ -257,10 +255,11 @@
             </dependency>
 
             <dependency>
-                <groupId>org.wltea.ik-analyzer</groupId>
+                <groupId>com.github.magese</groupId>
                 <artifactId>ik-analyzer</artifactId>
-                <version>${lucene.version}</version>
+                <version>8.3.0</version>
             </dependency>
+
 
         </dependencies>
     </dependencyManagement>

@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>design-patterns-practice</artifactId>
+    <artifactId>design-patterns</artifactId>
     <build>
         <plugins>
             <plugin>
