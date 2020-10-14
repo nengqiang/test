@@ -32,6 +32,8 @@
         <module>spring-mvc</module>
         <module>myspring</module>
         <module>distributed</module>
+        <module>java-web</module>
+        <module>front-end</module>
     </modules>
     <packaging>pom</packaging>
 
