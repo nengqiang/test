@@ -64,7 +64,7 @@
         <!-- another dependencies see spring-boot-stater-parent/spring-boot-dependencies -->
         <fastjson.version>1.2.9</fastjson.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <commons-io.version>2.5</commons-io.version>
+        <commons-io.version>2.7</commons-io.version>
         <guava.verison>23.0</guava.verison>
         <dom4j.version>1.6</dom4j.version>
         <jackson-dataformat.version>2.9.7</jackson-dataformat.version>
